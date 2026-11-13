@@ -69,3 +69,27 @@ export const submitQuiz = (token, resourceId, answers) =>
 export const getMyProfile = (token) => request('/api/m/profile', { token });
 export const refreshMyProfile = (token) => request('/api/m/profile/refresh', { method: 'POST', token });
 export const setAvatar = (token, avatar) => request('/api/m/avatar', { method: 'PUT', token, body: { avatar } });
+
+
+export const getDiscussions = (token, resourceId) =>
+  request(`/api/m/resources/${resourceId}/discussions`, { token });
+
+export const addDiscussion = (token, resourceId, text) =>
+  request(`/api/m/resources/${resourceId}/discussions`, {
+    method: 'POST',
+    token,
+    body: { text }
+  });
+
+export const addDiscussionReply = (token, discussionId, text) =>
+  request(`/api/m/discussions/${discussionId}/replies`, {
+    method: 'POST',
+    token,
+    body: { text }
+  });
+
+export const toggleDiscussionLike = (token, discussionId) =>
+  request(`/api/m/discussions/${discussionId}/like`, {
+    method: 'POST',
+    token
+  });

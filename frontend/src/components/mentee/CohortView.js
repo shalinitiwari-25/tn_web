@@ -1,5 +1,5 @@
 'use client';
-
+import DiscussionSection from '../DiscussionSection';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -125,9 +125,9 @@ export default function CohortView() {
                       {!v.completed && <button className="tn-btn tn-btn-sm" onClick={() => markDone(v)}>Mark complete (+{v.points})</button>}
                     </div>
                   </div>
-                  {isOpen && embed && (
+                   {isOpen && embed && (
                     <div style={{ marginTop: '0.75rem' }} className="tn-video-frame">
-                      <iframe src={embed} title={v.title} allow="accelerometer; encrypted-media; picture-in-picture" allowFullScreen />
+                      <iframe src={embed} title={v.title} allow="accelerometer; encrypted-media; picture-in-picture" allowFullScreen  />
                     </div>
                   )}
                 </div>
