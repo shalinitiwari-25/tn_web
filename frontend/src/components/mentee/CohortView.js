@@ -12,6 +12,7 @@ import QuizTaker from './QuizTaker';
 import '../ui/tn.css';
 
 const TABS = [
+  ['roadmap', 'Roadmap', 'fa-route'],
   ['syllabus', 'Syllabus', 'fa-list-check'],
   ['videos', 'Videos', 'fa-circle-play'],
   ['quizzes', 'Quizzes', 'fa-pen-to-square'],
@@ -114,6 +115,19 @@ export default function CohortView() {
 
   const videos = data.resources.filter((r) => r.type === 'video');
   const quizzes = data.resources.filter((r) => r.type === 'quiz');
+  const roadmapItems = data.resources.map((resource) => ({
+    ...resource,
+    completed: resource.type === 'video'
+      ? resource.completed
+      : resource.status === 'submitted',
+  }));
+
+  const completedCount = roadmapItems.filter((item) => item.completed).length;
+  const progress = roadmapItems.length
+    ? Math.round((completedCount / roadmapItems.length) * 100)
+    : 0;
+
+  const currentIndex = roadmapItems.findIndex((item) => !item.completed);
 
   return (
     <div className="tn-page">
@@ -236,6 +250,223 @@ export default function CohortView() {
             </div>
           </div>
         )}
+
+        {tab === 'roadmap' && (
+          <div className="tn-card">
+            <h2>Your Learning Roadmap</h2>
+
+            <div style={{ margin: '1rem 0 2rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8
+              }}>
+                <strong>Overall progress</strong>
+                <strong>{progress}% complete</strong>
+              </div>
+
+              <div style={{
+                height: 10,
+                background: '#e5e7eb',
+                borderRadius: 10,
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${progress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #0891b2, #10b981)',
+                  borderRadius: 10,
+                  transition: 'width 0.3s'
+                }} />
+              </div>
+
+              <p className="tn-muted">
+                {completedCount} of {roadmapItems.length} milestones completed
+              </p>
+            </div>
+
+            {roadmapItems.length === 0 ? (
+              <Empty icon="fa-route">
+                Your mentor has not added any roadmap milestones yet.
+              </Empty>
+            ) : (
+              <div style={{
+                position: 'relative',
+                padding: '1rem 0'
+              }}>
+
+                {/* Central connecting line */}
+                <div style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: 20,
+                  bottom: 20,
+                  width: 4,
+                  transform: 'translateX(-50%)',
+                  background: 'linear-gradient(#10b981, #0891b2, #dce5ee)',
+                  borderRadius: 5
+                }} />
+
+                {roadmapItems.map((item, index) => {
+                  const isCurrent = index === currentIndex && !item.completed;
+
+                  const milestoneCard = (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (item.type === 'video') {
+                          setTab('videos');
+                          setOpenVideo(item._id);
+                        } else {
+                          setTab('quizzes');
+                          setQuizId(item._id);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.currentTarget.click();
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '18px',
+                        minHeight: 105,
+                        borderRadius: 16,
+                        cursor: 'pointer',
+                        background: item.completed
+                          ? '#f0fdf4'
+                          : isCurrent ? '#eff6ff' : '#ffffff',
+                        border: item.completed
+                          ? '1px solid #bbf7d0'
+                          : isCurrent ? '2px solid #60a5fa' : '1px solid #e2e8f0',
+                        boxShadow: isCurrent
+                          ? '0 5px 18px rgba(37,99,235,0.12)'
+                          : '0 3px 12px rgba(0,0,0,0.05)',
+                        transition: 'transform 0.2s, box-shadow 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-5px)';
+                        e.currentTarget.style.boxShadow =
+                          '0 10px 22px rgba(0,0,0,0.10)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = isCurrent
+                          ? '0 5px 18px rgba(37,99,235,0.12)'
+                          : '0 3px 12px rgba(0,0,0,0.05)';
+                      }}
+                    >
+                      <div style={{
+                        width: 48,
+                        height: 48,
+                        minWidth: 48,
+                        borderRadius: 14,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        background: item.completed
+                          ? '#d1fae5'
+                          : isCurrent ? '#dbeafe' : '#e2e8f0',
+                        color: item.completed
+                          ? '#059669'
+                          : isCurrent ? '#2563eb' : '#64748b'
+                      }}>
+                        <i className={`fas ${
+                          item.type === 'video' ? 'fa-play' : 'fa-pen'
+                        }`} />
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong>{item.title}</strong>
+
+                        <div className="tn-muted" style={{ marginTop: 5 }}>
+                          {item.type === 'video' ? 'Lecture video' : 'Quiz'}
+                        </div>
+
+                        <span style={{
+                          display: 'inline-block',
+                          marginTop: 9,
+                          padding: '5px 10px',
+                          borderRadius: 20,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          background: item.completed
+                            ? '#d1fae5'
+                            : isCurrent ? '#dbeafe' : '#e2e8f0',
+                          color: item.completed
+                            ? '#047857'
+                            : isCurrent ? '#1d4ed8' : '#475569'
+                        }}>
+                          {item.completed
+                            ? 'Completed'
+                            : isCurrent ? 'In Progress' : 'Upcoming'}
+                        </span>
+                      </div>
+
+                      <i className="fas fa-chevron-right" style={{
+                        color: '#64748b'
+                      }} />
+                    </div>
+                  );
+
+                  return (
+                    <div
+                      key={item._id}
+                      className="roadmap-step-row"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1fr) 56px minmax(0, 1fr)',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 24,
+                        position: 'relative'
+                      }}
+                    >
+                      {/* Left and right alternating cards */}
+                      {index % 2 === 0
+                        ? milestoneCard
+                        : <div />}
+
+                      {/* Numbered circle in the centre */}
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        justifySelf: 'center',
+                        zIndex: 1,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        background: item.completed
+                          ? '#10b981'
+                          : isCurrent ? '#2563eb' : '#64748b',
+                        color: '#ffffff',
+                        border: '4px solid white',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                      }}>
+                        {item.completed
+                          ? <i className="fas fa-check" />
+                          : index + 1}
+                      </div>
+
+                      {index % 2 !== 0
+                        ? milestoneCard
+                        : <div />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {tab === 'feedback' && (
           <div className="tn-card">
             <h2>Mentor Feedback</h2>
