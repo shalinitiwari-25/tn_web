@@ -44,6 +44,7 @@ export default function MenteeDashboard() {
                 </div>
               </div>
               <div className="tn-hero-actions">
+                <Link href="/roadmap" className="tn-btn-ghost"><i className="fas fa-route" /> My roadmap</Link>
                 <Link href="/profile" className="tn-btn-ghost"><i className="fas fa-id-badge" /> My AI Profile</Link>
                 <Link href="/leaderboard" className="tn-btn-ghost"><i className="fas fa-ranking-star" /> Leaderboard</Link>
               </div>
@@ -84,7 +85,10 @@ export default function MenteeDashboard() {
                           <span className="tn-chip"><i className="fas fa-trophy" /> Rank #{c.rank} of {c.of}</span>
                           <span className="tn-chip"><i className="fas fa-star" /> {c.points} pts</span>
                         </div>
-                        <Link href={`/cohort/${c._id}`} className="tn-btn tn-btn-sm">Open cohort <i className="fas fa-arrow-right" /></Link>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <Link href={`/cohort/${c._id}`} className="tn-btn tn-btn-sm">Open cohort <i className="fas fa-arrow-right" /></Link>
+                          <Link href={`/roadmap?cohort=${c._id}`} className="tn-btn-outline tn-btn-sm"><i className="fas fa-route" /> Roadmap</Link>
+                        </div>
                       </div>
                     );
                   })}

@@ -38,8 +38,9 @@ Shared design tokens live in `frontend/src/app/globals.css`; reusable component 
 2. Request mentor access on the login page, then log in as **Admin**: approve the request (temp password shown once), create a cohort, assign a mentor.
 3. Log in as **Mentor** (Priya): add mentees (credentials table + CSV), add a video, create a quiz with a deadline.
 4. Log in as **Mentee** (TN26-0001): dashboard, cohort page (syllabus, video, quiz), take the quiz, see points.
-5. **Leaderboard** updates; open **My AI Profile** (avatar, badges, chart, summary, 3 recommendations).
-6. Back as Mentor: open a mentee's AI Profile (read-only).
+5. Mentee **Roadmap** (`/roadmap`): zigzag path of videos and quizzes with Done / Next / Opens soon / Missed states, progress ring and milestone badges.
+6. **Leaderboard** updates; open **My AI Profile** (avatar, badges, chart, summary, 3 recommendations).
+7. Back as Mentor: open a mentee's AI Profile (read-only).
 
 ## Points (rule-based, in `backend/utils/points.js`)
 Quiz `round(score/max*100)` + 10 on-time bonus per quiz, +5 per completed video, up to 100 per verified project.
@@ -50,6 +51,7 @@ Ties: earliest last activity wins. AI never decides ranks, points or badges. It 
 - Public: `GET /api/public/cohorts`, `GET /api/public/leaderboard/:cohortId`
 - Admin (`/api/admin`): stats, mentor-requests (+approve/reject), cohorts CRUD, assign/remove mentor, analytics, mentors
 - Mentor (`/api/mentor`): me, cohorts, cohorts/:id/overview, mentees/bulk, videos, quizzes, mentees/:id/profile
+- Roadmap page (`/roadmap`) is frontend-only: it reads `GET /api/m/cohorts/:id` and computes states and milestones in `frontend/src/lib/roadmap.js` (rule-based, no AI).
 - Mentee (`/api/m`): dashboard, cohorts/:id, resources/:id/complete, resources/:id/quiz (+/submit), profile (+/refresh), avatar
 All non-public routes are role-checked on the server (`middleware/requireRole.js`).
 

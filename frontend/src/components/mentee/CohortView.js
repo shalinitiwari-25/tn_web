@@ -45,6 +45,12 @@ export default function CohortView() {
 
   useEffect(() => { if (ready) load(); }, [ready, load]);
 
+  // Roadmap links open a specific tab: /cohort/:id?tab=videos
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('tab');
+    if (wanted && TABS.some(([k]) => k === wanted)) setTab(wanted);
+  }, []);
+
   const markDone = async (video) => {
     try {
       const res = await completeVideo(token, video._id);

@@ -16,7 +16,7 @@ const PUBLIC_LINKS = [
   ['/faq', 'FAQs'],
 ];
 const ROLE_LINKS = {
-  mentee: [['/dashboard', 'Dashboard'], ['/profile', 'AI Profile']],
+  mentee: [['/dashboard', 'Dashboard'], ['/roadmap', 'Roadmap'], ['/profile', 'AI Profile']],
   mentor: [['/mentor', 'Mentor panel']],
   admin: [['/admin', 'Admin panel']],
 };
