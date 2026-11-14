@@ -10,6 +10,7 @@ import Avatar from '../ui/Avatar';
 import { Spinner, Alert, Empty, RankBadge, HowPoints } from '../ui/Common';
 import QuizTaker from './QuizTaker';
 import '../ui/tn.css';
+import CommunityChat from '../ui/CommunityChat';
 
 const TABS = [
   ['syllabus', 'Syllabus', 'fa-list-check'],
@@ -17,6 +18,7 @@ const TABS = [
   ['quizzes', 'Quizzes', 'fa-pen-to-square'],
   ['leaderboard', 'Leaderboard', 'fa-ranking-star'],
   ['feedback', 'Mentor Feedback', 'fa-star'],
+  ['community', 'Community Chat', 'fa-comments'],
 ];
 
 export default function CohortView() {
@@ -313,6 +315,10 @@ export default function CohortView() {
               </div>
             ))}
           </div>
+        )}
+
+        {tab === 'community' && (
+          <CommunityChat token={token} cohortId={id} />
         )}
       </div>
 

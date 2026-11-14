@@ -40,6 +40,7 @@ app.use('/api/mentor', require('./routes/mentorRoutes'));      // Mentor panel r
 app.use('/api/public', require('./routes/publicRoutes'));      // Cohort listing + leaderboard (no auth)
 app.use('/api/m', require('./routes/menteeRoutes'));          // Mentee portal routes
 app.use('/api/mentor-feedback', require('./routes/mentorFeedbackRoutes')); // Mentor feedback
+app.use('/api/community', require('./routes/communityRoutes'));
 
 app.get('/', (req, res) => res.send('Mentorship API Running'));
 

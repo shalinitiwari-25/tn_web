@@ -85,3 +85,15 @@ export const submitMentorFeedback = (token, cohortId, mentorId, rating, comment)
     token,
     body: { mentorId, rating, comment }
   });
+
+  // Community Chat
+
+export const getCommunityMessages = (token, cohortId) =>
+  request(`/api/community/cohorts/${cohortId}/messages`, { token });
+
+export const sendCommunityMessage = (token, cohortId, message) =>
+  request(`/api/community/cohorts/${cohortId}/messages`, {
+    method: 'POST',
+    token,
+    body: { message }
+  });

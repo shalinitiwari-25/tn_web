@@ -7,6 +7,7 @@ import { useRoleGuard, handleAuthError } from '../../lib/useAuth';
 import { getMentorCohorts, getMentorOverview, addMenteesBulk, addVideo, createQuiz } from '../../lib/api';
 import { formatDateTime } from '../../lib/video';
 import { Spinner, Alert, Empty, RankBadge } from '../ui/Common';
+import CommunityChat from '../ui/CommunityChat';
 import '../ui/tn.css';
 
 const blankQuestion = () => ({ questionText: '', options: ['', '', '', ''], correctOptionIndex: 0, marks: 1 });
@@ -69,11 +70,29 @@ export default function MentorPanel() {
         {cohorts && cohorts.length > 0 && (
           <>
             <div className="tn-tabs" role="tablist">
-              {[['mentees', 'Mentees', 'fa-user-graduate'], ['videos', 'Videos', 'fa-circle-play'], ['quizzes', 'Quizzes', 'fa-pen-to-square']].map(([k, l, i]) => (
-                <button key={k} role="tab" aria-selected={tab === k} className={`tn-tab${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}><i className={`fas ${i}`} /> {l}</button>
+              {[
+                ['mentees', 'Mentees', 'fa-user-graduate'],
+                ['videos', 'Videos', 'fa-circle-play'],
+                ['quizzes', 'Quizzes', 'fa-pen-to-square'],
+                ['community', 'Community Chat', 'fa-comments']
+              ].map(([k, l, i]) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={tab === k}
+                  className={`tn-tab${tab === k ? ' active' : ''}`}
+                  onClick={() => setTab(k)}
+                >
+                  <i className={`fas ${i}`} /> {l}
+                </button>
               ))}
             </div>
-            {!overview ? <Spinner /> : (
+
+            {tab === 'community' ? (
+              <CommunityChat token={token} cohortId={cohortId} />
+            ) : !overview ? (
+              <Spinner />
+            ) : (
               <>
                 {tab === 'mentees' && <MenteesTab token={token} cohortId={cohortId} overview={overview} reload={loadOverview} />}
                 {tab === 'videos' && <VideosTab token={token} cohortId={cohortId} overview={overview} reload={loadOverview} />}
