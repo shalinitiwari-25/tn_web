@@ -53,8 +53,17 @@ Ties: earliest last activity wins. AI never decides ranks, points or badges. It 
 - Mentor (`/api/mentor`): me, cohorts, cohorts/:id/overview, mentees/bulk, videos, quizzes, mentees/:id/profile
 - Roadmap page (`/roadmap`) is frontend-only: it reads `GET /api/m/cohorts/:id` and computes states and milestones in `frontend/src/lib/roadmap.js` (rule-based, no AI).
 - Mentee (`/api/m`): dashboard, cohorts/:id, resources/:id/complete, resources/:id/quiz (+/submit), profile (+/refresh), avatar
+- Chat (`/api/chat`, mentors and mentees only): contacts, conversations, unread, messages (GET with `room=community` or `peer=<role>:<id>`, `after`/`before` cursors; POST to send)
 - Admin sign-in (`/api/auth/admin/login` then `/api/auth/admin/verify-2fa`), `POST /api/admin/logout-all`, `GET /api/admin/audit-log`
 All non-public routes are role-checked on the server (`middleware/requireRole.js`).
+
+## Chat (mentees and mentors)
+Open **Chat** in the navbar (or the Chat button on the dashboard / mentor panel), at `/chat`.
+- **Community room**: one shared room for all mentees and mentors. Anyone can ask a question, anyone can answer.
+- **Direct messages**: a mentee can message any approved mentor. A mentor can message any mentee or any other mentor. Mentee-to-mentee chat happens in the community room.
+- Unread badges on the sidebar and the navbar, "Load earlier messages", Enter to send (Shift+Enter for a new line), 1000 characters per message, a flood limit of 15 messages per 30 seconds.
+- **Admins have no chat**: every `/api/chat` route is `requireRole('mentor','mentee')`, so an admin token gets 403, and the admin navbar has no Chat link.
+- Messages refresh by polling every 4 seconds while the tab is visible, so there is nothing new to install. Models: `ChatMessage`, `ChatRead`.
 
 ## Admin security
 Admin is the most powerful role (delete cohorts, approve mentors), so a leaked password must not be enough.
@@ -84,4 +93,4 @@ This prints a new QR code and recovery codes, ends the admin's existing sessions
 **Known limits.** Tokens live in the browser's localStorage (as before), so an XSS bug elsewhere could read them; the 1-hour admin session and 2FA limit the damage. Lockout is per account, so someone who knows a mentee's enrollment number can lock them out for 15 minutes. Mentor/mentee sessions are still 7 days.
 
 ## Not built (future scope)
-AI auto-labelling of uploads, mentor support alerts, mentor handover, adaptive practice, reminders/notifications, per-video discussion, mentor ratings, project submissions UI (backend model fields kept).
+AI auto-labelling of uploads, mentor support alerts, mentor handover, adaptive practice, reminders/notifications, per-video discussion (chat is global / direct only), chat moderation tools, real-time sockets, mentor ratings, project submissions UI (backend model fields kept).

@@ -85,3 +85,18 @@ export const submitMentorFeedback = (token, cohortId, mentorId, rating, comment)
     token,
     body: { mentorId, rating, comment }
   });
+
+// ───────── Chat (mentors and mentees only) ─────────
+// A conversation is either { room: 'community' } or { peer: 'mentor:<id>' } / { peer: 'mentee:<id>' }
+const chatQuery = (conv, extra = {}) => {
+  const p = new URLSearchParams();
+  if (conv.peer) p.set('peer', conv.peer); else p.set('room', conv.room || 'community');
+  Object.entries(extra).forEach(([k, v]) => { if (v) p.set(k, v); });
+  return p.toString();
+};
+export const getChatContacts = (token, q = '') => request(`/api/chat/contacts?q=${encodeURIComponent(q)}`, { token });
+export const getChatConversations = (token) => request('/api/chat/conversations', { token });
+export const getChatUnread = (token) => request('/api/chat/unread', { token });
+export const getChatMessages = (token, conv, extra) => request(`/api/chat/messages?${chatQuery(conv, extra)}`, { token });
+export const sendChatMessage = (token, conv, text) =>
+  request('/api/chat/messages', { method: 'POST', token, body: { ...(conv.peer ? { peer: conv.peer } : { room: conv.room || 'community' }), text } });

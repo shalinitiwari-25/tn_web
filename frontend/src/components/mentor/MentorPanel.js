@@ -53,11 +53,14 @@ export default function MentorPanel() {
             <h1>Mentor panel</h1>
             <p>Hello {user?.name}. Manage your cohorts, mentees, videos and quizzes.</p>
           </div>
+          <div className="tn-hero-actions">
+            <Link href="/chat" className="tn-btn-ghost"><i className="fas fa-comments" /> Chat</Link>
           {cohorts && cohorts.length > 0 && (
             <select className="tn-select" style={{ width: 'auto', minWidth: 220 }} value={cohortId} onChange={(e) => setCohortId(e.target.value)} aria-label="Select cohort">
               {cohorts.map((c) => <option key={c._id} value={c._id}>{c.name} ({c.menteeCount})</option>)}
             </select>
           )}
+          </div>
         </div>
 
         {error && <Alert>{error}</Alert>}

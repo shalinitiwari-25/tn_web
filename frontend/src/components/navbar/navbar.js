@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import './navbar.css';
+import '../chat/chat.css';
 import logo from '../../assets/logo.png';
-import { getUser, clearAuth } from '../../lib/auth';
+import { getUser, getToken, clearAuth } from '../../lib/auth';
+import { getChatUnread } from '../../lib/api';
 import Avatar from '../ui/Avatar';
 
 const PUBLIC_LINKS = [
@@ -16,8 +18,8 @@ const PUBLIC_LINKS = [
   ['/faq', 'FAQs'],
 ];
 const ROLE_LINKS = {
-  mentee: [['/dashboard', 'Dashboard'], ['/roadmap', 'Roadmap'], ['/profile', 'AI Profile']],
-  mentor: [['/mentor', 'Mentor panel']],
+  mentee: [['/dashboard', 'Dashboard'], ['/roadmap', 'Roadmap'], ['/profile', 'AI Profile'], ['/chat', 'Chat']],
+  mentor: [['/mentor', 'Mentor panel'], ['/chat', 'Chat']],
   admin: [['/admin', 'Admin panel']],
 };
 
@@ -27,8 +29,20 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => { setUser(getUser()); setOpen(false); }, [pathname]);
+
+  // unread chat badge: mentors and mentees only (admins have no chat)
+  useEffect(() => {
+    const token = getToken();
+    if (!user || !token || !['mentor', 'mentee'].includes(user.role)) { setUnread(0); return; }
+    let alive = true;
+    const poll = () => { if (!document.hidden) getChatUnread(token).then((d) => alive && setUnread(d.total)).catch(() => {}); };
+    poll();
+    const t = setInterval(poll, 20000);
+    return () => { alive = false; clearInterval(t); };
+  }, [user, pathname]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -63,7 +77,7 @@ export default function Navbar() {
           <ul className="nb-links">
             {links.map(([href, label]) => (
               <li key={href}>
-                <Link href={href} className={`nb-link${isActive(href) ? ' active' : ''}`} aria-current={isActive(href) ? 'page' : undefined}>{label}</Link>
+                <Link href={href} className={`nb-link${isActive(href) ? ' active' : ''}`} aria-current={isActive(href) ? 'page' : undefined}>{label}{href === '/chat' && unread > 0 && pathname !== '/chat' && <span className="nb-badge" aria-label={`${unread} unread messages`}>{unread > 99 ? '99+' : unread}</span>}</Link>
               </li>
             ))}
           </ul>

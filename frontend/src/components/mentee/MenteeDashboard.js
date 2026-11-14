@@ -46,6 +46,7 @@ export default function MenteeDashboard() {
               <div className="tn-hero-actions">
                 <Link href="/roadmap" className="tn-btn-ghost"><i className="fas fa-route" /> My roadmap</Link>
                 <Link href="/profile" className="tn-btn-ghost"><i className="fas fa-id-badge" /> My AI Profile</Link>
+                <Link href="/chat" className="tn-btn-ghost"><i className="fas fa-comments" /> Chat</Link>
                 <Link href="/leaderboard" className="tn-btn-ghost"><i className="fas fa-ranking-star" /> Leaderboard</Link>
               </div>
             </div>
