@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRoleGuard } from '../../lib/useAuth';
+import { useRouter } from 'next/navigation';
+import { useRoleGuard, handleAuthError } from '../../lib/useAuth';
+import { clearAuth } from '../../lib/auth';
 import {
   getAdminStats, getMentorRequests, approveMentorRequest, rejectMentorRequest,
   getAdminCohorts, createCohort, updateCohort, deleteCohort, assignMentor, removeMentor,
-  getCohortAnalytics, getAdminMentors, getAdminMentorFeedback,
+  getCohortAnalytics, getAdminMentors, getAdminMentorFeedback, adminLogoutAll, getAuditLog,
 } from '../../lib/api';
 import { Spinner, Alert, Empty } from '../../components/ui/Common';
 import '../../components/ui/tn.css';
@@ -15,6 +17,7 @@ const idOf = (o) => o._id || o.id;
 const when = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
 
 export default function AdminPage() {
+  const router = useRouter();
   const { ready, token, user } = useRoleGuard('admin');
   const [tab, setTab] = useState('dashboard');
   const [error, setError] = useState('');
@@ -25,6 +28,7 @@ export default function AdminPage() {
   const [cohorts, setCohorts] = useState(null);
   const [mentors, setMentors] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [audit, setAudit] = useState(null); // { entries, total, page, limit }
 
   const [approved, setApproved] = useState(null); // { name, email, password }
   const [busyId, setBusyId] = useState(null);
@@ -37,7 +41,7 @@ export default function AdminPage() {
   const [assignFor, setAssignFor] = useState(null);
   const [mentorPick, setMentorPick] = useState('');
 
-  const guard = async (fn) => { setError(''); try { return await fn(); } catch (e) { setError(e.message || 'Something went wrong'); } };
+  const guard = async (fn) => { setError(''); try { return await fn(); } catch (e) { if (handleAuthError(e, router)) return; setError(e.message || 'Something went wrong'); } };
 
   const loadStats = useCallback(() => guard(async () => setStats(await getAdminStats(token))), [token]);
   const loadRequests = useCallback(() => guard(async () => setRequests(toList(await getMentorRequests(token), 'requests'))), [token]);
@@ -48,12 +52,21 @@ export default function AdminPage() {
     setFeedback(Array.isArray(data) ? data : data.feedback || []);
   }), [token]);
 
+  const loadAudit = useCallback((page = 0) => guard(async () => setAudit(await getAuditLog(token, page))), [token]);
+
   useEffect(() => {
     if (!ready) return;
     loadStats(); loadRequests(); loadCohorts(); loadMentors(); loadFeedback();
   }, [ready, loadStats, loadRequests, loadCohorts, loadMentors, loadFeedback]);
 
+  useEffect(() => { if (ready && tab === 'audit') loadAudit(0); }, [ready, tab, loadAudit]);
+
   if (!ready) return <div className="tn-page"><Spinner /></div>;
+
+  const signOutEverywhere = () => {
+    if (!confirm('Sign out of every admin session, including this one?')) return;
+    return guard(async () => { await adminLogoutAll(token); clearAuth(); router.push('/admin-access'); });
+  };
 
   const feedbackSummary = (() => {
     const map = new Map();
@@ -92,7 +105,7 @@ export default function AdminPage() {
       setCohortModal(false);
       setToast(editing ? 'Cohort updated' : 'Cohort created');
       await Promise.all([loadCohorts(), loadStats()]);
-    } catch (err) { setFormError(err.message); } finally { setSaving(false); }
+    } catch (err) { if (!handleAuthError(err, router)) setFormError(err.message); } finally { setSaving(false); }
   };
   const removeCohort = (c) => {
     if (!confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
@@ -120,6 +133,7 @@ export default function AdminPage() {
     ['cohorts', 'Cohorts', 'fa-layer-group'],
     ['mentors', 'Mentors', 'fa-chalkboard-user'],
     ['feedback', 'Mentor Feedback', 'fa-star'],
+    ['audit', 'Audit log', 'fa-clipboard-list'],
   ];
 
   return (
@@ -133,6 +147,7 @@ export default function AdminPage() {
           </div>
           <div className="tn-hero-actions">
             <button className="tn-btn-ghost" onClick={() => { setTab('cohorts'); openCohort(null); }}><i className="fas fa-plus" /> New cohort</button>
+            <button className="tn-btn-ghost" onClick={signOutEverywhere} title="Ends every admin session, on every device"><i className="fas fa-right-from-bracket" /> Sign out everywhere</button>
           </div>
         </div>
 
@@ -309,6 +324,37 @@ export default function AdminPage() {
               </>
             )}
           </>
+        )}
+
+        {/* ───── Audit log ───── */}
+        {tab === 'audit' && (
+          <div className="tn-card">
+            <h2>Audit log</h2>
+            <p className="tn-muted" style={{ marginBottom: '1rem' }}>Sign-ins (including failed and locked-out attempts) and every change made in this panel. Passwords and codes are never recorded.</p>
+            {!audit ? <Spinner /> : audit.entries.length === 0 ? <Empty icon="fa-clipboard-list">Nothing recorded yet.</Empty> : (
+              <>
+                <div className="tn-table-wrap"><table className="tn-table">
+                  <thead><tr><th>When</th><th>Action</th><th>By</th><th>Target</th><th>IP</th><th>Result</th></tr></thead>
+                  <tbody>{audit.entries.map((e) => (
+                    <tr key={e._id}>
+                      <td style={{ whiteSpace: 'nowrap' }}>{new Date(e.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                      <td><code>{e.action}</code></td>
+                      <td>{e.actorLabel || '-'}</td>
+                      <td>{e.targetLabel ? `${e.targetType}: ${e.targetLabel}` : '-'}</td>
+                      <td>{e.ip || '-'}</td>
+                      <td><span className={`tn-pill ${e.success ? 'done' : 'closed'}`}>{e.success ? 'OK' : 'Failed'}</span></td>
+                    </tr>
+                  ))}</tbody></table></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <span className="tn-muted">{audit.page * audit.limit + 1}-{audit.page * audit.limit + audit.entries.length} of {audit.total}</span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="tn-btn-outline tn-btn-sm" disabled={audit.page === 0} onClick={() => loadAudit(audit.page - 1)}>Newer</button>
+                    <button className="tn-btn-outline tn-btn-sm" disabled={(audit.page + 1) * audit.limit >= audit.total} onClick={() => loadAudit(audit.page + 1)}>Older</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

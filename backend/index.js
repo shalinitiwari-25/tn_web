@@ -4,12 +4,33 @@ const connectDB = require('./config/db');
 const app = express();
 const cors = require('cors');
 
+const isProd = process.env.NODE_ENV === 'production';
+
+// A weak or placeholder JWT secret makes every token forgeable
+const secret = process.env.JWT_SECRET || '';
+if (secret.length < 32 || /change_me/i.test(secret)) {
+  console.warn('[security] JWT_SECRET is missing, short (<32 chars) or still the example value. Generate one: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"');
+  if (isProd) { console.error('Refusing to start in production with a weak JWT_SECRET.'); process.exit(1); }
+}
+
 // Connect to MongoDB
 connectDB();
 
+// Behind a hosting proxy (Render, Railway, Vercel...) req.ip is the proxy unless this is set.
+// TRUST_PROXY = number of proxy hops (default 1 in production, off locally).
+const hops = process.env.TRUST_PROXY !== undefined ? Number(process.env.TRUST_PROXY) : (isProd ? 1 : 0);
+if (hops > 0) app.set('trust proxy', hops);
+app.disable('x-powered-by');
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+const origins = (process.env.CORS_ORIGINS || '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
+if (!origins.length && isProd) console.warn('[security] CORS_ORIGINS is not set: any website can call this API from a browser. Set it to your frontend URL.');
+app.use(cors(origins.length ? { origin: origins } : undefined));
+app.use((req, res, next) => {
+  res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store' });
+  next();
+});
+app.use(express.json({ limit: '200kb' }));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));         // Unified auth (login, change-password)

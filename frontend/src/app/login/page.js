@@ -13,7 +13,6 @@ import './auth.css';
 const ROLES = [
   ['mentee', 'Mentee', 'fa-user-graduate'],
   ['mentor', 'Mentor', 'fa-chalkboard-user'],
-  ['admin', 'Admin', 'fa-shield-halved'],
 ];
 
 export default function LoginPage() {
@@ -50,8 +49,7 @@ export default function LoginPage() {
       const data = await login(emailOrEnrollment, password, role);
       setAuth(data.token, data.user);
       if (data.user.mustChangePassword) { router.push('/change-password'); return; }
-      if (data.user.role === 'admin') router.push('/admin');
-      else if (data.user.role === 'mentor') router.push('/mentor');
+      if (data.user.role === 'mentor') router.push('/mentor');
       else router.push(joinCohort ? `/cohort/${joinCohort.id}` : '/dashboard');
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');

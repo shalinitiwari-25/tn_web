@@ -27,7 +27,8 @@ export default function ChangePasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (newPassword.length < 8) { setError('Password must be at least 8 characters long.'); return; }
+    const minLen = (getUser() || {}).role === 'admin' ? 12 : 8;
+    if (newPassword.length < minLen) { setError(`Password must be at least ${minLen} characters long.`); return; }
     if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
 
     setLoading(true);
@@ -64,7 +65,7 @@ export default function ChangePasswordPage() {
             <label htmlFor="np">New password</label>
             <div className="tn-input-icon">
               <i className="fas fa-lock" />
-              <input id="np" className="tn-input" type={show ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" required />
+              <input id="np" className="tn-input" type={show ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters (12 for admins)" autoComplete="new-password" required />
               <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'}><i className={`fas ${show ? 'fa-eye-slash' : 'fa-eye'}`} style={{ position: 'static', transform: 'none' }} /></button>
             </div>
             <div className="tn-progress" style={{ marginTop: '0.5rem' }} aria-hidden="true"><div style={{ width: `${strength * 25}%`, background: strength < 2 ? '#dc2626' : strength < 4 ? '#f5b301' : '#16a34a' }} /></div>

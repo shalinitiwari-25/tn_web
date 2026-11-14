@@ -26,6 +26,11 @@ async function request(path, { method = 'GET', body, token } = {}) {
 
 // ───────── Auth ─────────
 export const login = (email, password, role) => request('/api/auth/login', { method: 'POST', body: { email, password, role } });
+// Admin sign-in is separate from the public login: password first, then a 6-digit authenticator code
+export const adminLogin = (email, password) => request('/api/auth/admin/login', { method: 'POST', body: { email, password } });
+export const adminVerify2fa = (challenge, code) => request('/api/auth/admin/verify-2fa', { method: 'POST', body: { challenge, code } });
+export const adminLogoutAll = (token) => request('/api/admin/logout-all', { method: 'POST', token });
+export const getAuditLog = (token, page = 0) => request(`/api/admin/audit-log?page=${page}&limit=25`, { token });
 export const changePassword = (token, currentPassword, newPassword) =>
   request('/api/auth/change-password', { method: 'POST', token, body: { currentPassword, newPassword } });
 export const submitMentorRequest = (data) => request('/api/mentor-requests', { method: 'POST', body: data });

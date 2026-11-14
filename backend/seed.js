@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const Admin = require('./models/Admin');
 const Mentor = require('./models/Mentor');
@@ -10,6 +11,10 @@ const Resource = require('./models/Resource');
 const Quiz = require('./models/Quiz');
 const QuizSubmission = require('./models/QuizSubmission');
 const MentorRequest = require('./models/MentorRequest');
+const LoginThrottle = require('./models/LoginThrottle');
+const AuditLog = require('./models/AuditLog');
+const { twoFaRequired } = require('./utils/adminSession');
+const { enroll, printEnrollment } = require('./utils/adminTwoFactor');
 
 async function seed() {
   try {
@@ -27,19 +32,29 @@ async function seed() {
       Resource.deleteMany({}),
       Quiz.deleteMany({}),
       QuizSubmission.deleteMany({}),
-      MentorRequest.deleteMany({})
+      MentorRequest.deleteMany({}),
+      LoginThrottle.deleteMany({}),
+      AuditLog.deleteMany({})
     ]);
     console.log('Collections cleared.');
 
     // ── 2. Create Admin ───────────────────────────────────────────────────────
+    // No default password: use ADMIN_PASSWORD from .env, or a random one that is printed once below.
+    const adminEmail = String(process.env.ADMIN_EMAIL || 'admin@techneeds.in').trim().toLowerCase();
+    let adminPassword = process.env.ADMIN_PASSWORD;
+    const generatedPassword = !adminPassword;
+    if (generatedPassword) adminPassword = crypto.randomBytes(12).toString('base64url');
+    if (adminPassword.length < 12) throw new Error('ADMIN_PASSWORD must be at least 12 characters');
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be set in .env before seeding');
     const admin = new Admin({
       name: 'Admin TechNeeds',
-      email: 'admin@techneeds.in',
-      password: await bcrypt.hash('Admin@2026', 10),
+      email: adminEmail,
+      password: await bcrypt.hash(adminPassword, 10),
       role: 'admin',
-      mustChangePassword: false
+      mustChangePassword: generatedPassword // a generated password must be replaced at first login
     });
     await admin.save();
+    const adminTwoFa = twoFaRequired() ? await enroll(Admin, admin) : null;
     console.log('Admin created.');
 
     // ── 3. Create Mentors ─────────────────────────────────────────────────────
@@ -292,7 +307,8 @@ async function seed() {
     console.log('\n' + '='.repeat(55));
     console.log('=== DEMO CREDENTIALS ===');
     console.log('='.repeat(55));
-    console.log(`Admin:    admin@techneeds.in / Admin@2026`);
+    console.log(generatedPassword ? `Admin:    ${adminEmail} / ${adminPassword}   (generated, shown once; you must change it at first login)` : `Admin:    ${adminEmail} / (the ADMIN_PASSWORD from your .env)`);
+    console.log(`          Sign in at /admin-access (not on the public login page). 2FA: ${adminTwoFa ? 'ON (see setup below)' : 'OFF (ADMIN_2FA_REQUIRED=false)'}`);
     console.log(`Mentor 1: priya.sharma@techneeds.in / Mentor@001`);
     console.log(`Mentor 2: ankit.verma@techneeds.in  / Mentor@002`);
     console.log(`Mentees:  (enrollmentNumber) / Pass@1234  [TN26-0003 onwards must change password on first login]`);
@@ -300,6 +316,7 @@ async function seed() {
       console.log(`  ${m.enrollmentNumber} — ${m.name}`);
     });
     console.log('='.repeat(55));
+    if (adminTwoFa) await printEnrollment({ email: adminEmail, ...adminTwoFa });
     console.log('\nSeed completed successfully!');
 
     process.exit(0);

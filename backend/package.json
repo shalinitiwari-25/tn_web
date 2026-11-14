@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "seed": "node seed.js",
-    "test": "node tests/logic.test.js"
+    "test": "node tests/logic.test.js && node tests/totp.test.js && node tests/adminSecurity.test.js",
+    "admin:2fa": "node scripts/admin2fa.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,7 @@
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.2"
+    "mongoose": "^8.13.2",
+    "qrcode": "^1.5.4"
   }
 }

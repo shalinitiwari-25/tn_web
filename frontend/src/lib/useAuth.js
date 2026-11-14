@@ -29,8 +29,10 @@ export function useRoleGuard(...roles) {
 /** If the session expired, clear it and go to login. Returns true when handled. */
 export function handleAuthError(err, router) {
   if (err && err.status === 401) {
+    // Admins get sent back to their own entry page (their session is only 1 hour)
+    const wasAdmin = (getUser() || {}).role === 'admin';
     clearAuth();
-    router.push('/login');
+    router.push(wasAdmin ? '/admin-access' : '/login');
     return true;
   }
   return false;
